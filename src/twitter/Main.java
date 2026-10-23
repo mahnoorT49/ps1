@@ -3,6 +3,8 @@
  */
 package twitter;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -74,6 +76,40 @@ public class Main {
         for (Tweet t : Filter.containing(tweets, Arrays.asList("rivest", "pset"))) {
             System.out.println("(" + t.getId() + "  " + t.getTimestamp() + " "
                     + t.getAuthor() + ") " + t.getText());
+        }
+        
+        // Infer the follow graph from the tweets.
+        Map<String, Set<String>> followsGraph =
+                SocialNetwork.guessFollowsGraph(tweets);
+
+        // Calculate the number of followers for each user.
+        Map<String, Integer> followerCounts = new HashMap<>();
+
+        for (String user : followsGraph.keySet()) {
+            followerCounts.putIfAbsent(user, 0);
+
+            for (String followedUser : followsGraph.get(user)) {
+                followerCounts.put(followedUser,followerCounts.getOrDefault(followedUser, 0) + 1);
+            }
+        }
+
+        // Get users ranked by influence.
+        List<String> rankedUsers = SocialNetwork.influencers(followsGraph);
+
+        // Print the top 18 influencers.
+        System.out.println();
+        System.out.println("Top 18 influencers:");
+
+        int limit = Math.min(18, rankedUsers.size());
+
+        for (int i = 0; i < limit; i++) {
+            String user = rankedUsers.get(i);
+            int count = followerCounts.getOrDefault(user, 0);
+
+            System.out.println(
+                    user + " (" + count
+                    + (count == 1 ? " follower)" : " followers)")
+            );
         }
     }
     

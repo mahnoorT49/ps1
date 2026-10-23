@@ -3,9 +3,12 @@
  */
 package twitter;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * SocialNetwork provides methods that operate on a social network.
@@ -40,9 +43,24 @@ public class SocialNetwork {
      *         All the Twitter usernames in the returned social network must be
      *         either authors or @-mentions in the list of tweets.
      */
-    public static Map<String, Set<String>> guessFollowsGraph(List<Tweet> tweets) {
-        throw new RuntimeException("not implemented");
-    }
+	public static Map<String, Set<String>> guessFollowsGraph(List<Tweet> tweets) {
+	    Map<String, Set<String>> graph = new HashMap<>();
+	
+	    for (Tweet tweet : tweets) {
+	        String author = tweet.getAuthor().toLowerCase(java.util.Locale.ROOT);
+	
+	        List<Tweet> singleTweet = java.util.Collections.singletonList(tweet);
+	        Set<String> mentionedUsers = Extract.getMentionedUsers(singleTweet);
+	
+	        if (!mentionedUsers.isEmpty()) {
+	            graph.putIfAbsent(author, new HashSet<>());
+	            graph.get(author).addAll(mentionedUsers);
+	        }
+	    }
+	
+	    return graph;
+	}
+
 
     /**
      * Find the people in a social network who have the greatest influence, in
@@ -53,8 +71,29 @@ public class SocialNetwork {
      * @return a list of all distinct Twitter usernames in followsGraph, in
      *         descending order of follower count.
      */
-    public static List<String> influencers(Map<String, Set<String>> followsGraph) {
-        throw new RuntimeException("not implemented");
-    }
+	public static List<String> influencers(Map<String, Set<String>> followsGraph) {
+	    Map<String, Integer> followerCounts = new HashMap<>();
+
+	    for (String user : followsGraph.keySet()) {
+	        followerCounts.put(user, 0);
+	
+	        for (String followedUser : followsGraph.get(user)) {
+	            followerCounts.putIfAbsent(followedUser, 0);
+	            followerCounts.put(followedUser, followerCounts.get(followedUser) + 1);
+	        }
+	    }
+
+	    List<String> result = new ArrayList<>(followerCounts.keySet());
+	
+	    result.sort((user1, user2) ->
+	    Integer.compare(
+	        followerCounts.get(user2),
+	        followerCounts.get(user1)
+	    )
+	);
+	
+	    return result;
+	}
+
 
 }
